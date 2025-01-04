@@ -1,0 +1,48 @@
+networks:
+  app-local:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:16.2
+    container_name: keycloak_db-local
+    env_file:
+      - ./apps/keycloak/.env.local
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-local
+
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.6
+    container_name: keycloak-local
+    env_file:
+      - ./apps/keycloak/.env.local
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgres
+    restart: always
+    command: start
+    networks:
+      - app-local
+
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./apps/keycloak/postgres_data
